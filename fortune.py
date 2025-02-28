@@ -593,6 +593,12 @@ elif page == "设置":
         else:
             st.error(f"{provider} API密钥: 未配置 ❌")
     
+    # 插入收款码
+    st.subheader("支持开发者")
+    st.write("如果您喜欢这个应用，欢迎通过以下方式支持开发者：")
+    st.image('images/alipay.jpg', caption="扫码支持", width=200)
+    st.write("感谢您的支持！您的捐赠将用于应用的维护和改进。")
+
     st.subheader("关于应用")
     st.write("星语智卜是一款基于人工智能的命理解析工具，结合了塔罗牌、星座运势和姓名学等多种算命方式。")
     st.write("本应用支持智谱AI、DeepSeek和Google Gemini三种模型提供商，可以根据需要灵活切换。")
