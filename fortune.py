@@ -48,7 +48,7 @@ def rotate_image(image_path, angle=180):
 
 # 侧边栏导航
 st.sidebar.title("星语智卜")
-page = st.sidebar.radio("导航", ["塔罗占卜","八字分析", "六爻占卜" , "星座运势", "姓名测算", "今日宜忌", "设置"])
+page = st.sidebar.radio("导航", ["塔罗占卜","八字分析", "六爻占卜" , "星座运势", "姓名测算", "今日宜忌", "设置和捐赠"])
 
 # 模型选择部分
 st.sidebar.markdown("---")
@@ -570,7 +570,7 @@ elif page == "六爻占卜":
             st.session_state.moving_lines = []
 
 # 设置页面
-elif page == "设置":
+elif page == "设置和捐赠":
     st.title("⚙️ 系统设置")
     st.subheader("AI模型配置")
     st.info(f"当前模型提供商: {st.session_state.model_provider}")
@@ -597,7 +597,7 @@ elif page == "设置":
     st.subheader("支持开发者")
     st.write("如果您喜欢这个应用，欢迎通过以下方式支持开发者：")
     st.image('image/alipay.jpg', caption="扫码支持", width=200)
-    st.write("感谢您的支持！您的捐赠将用于应用的维护和改进。")
+    st.write("感谢您的支持！您的捐赠将用于应用的维护和改进，您的支持是我开发的动力。")
 
     st.subheader("关于应用")
     st.write("星语智卜是一款基于人工智能的命理解析工具，结合了塔罗牌、星座运势和姓名学等多种算命方式。")
