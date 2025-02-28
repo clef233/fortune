@@ -48,9 +48,9 @@ def rotate_image(image_path, angle=180):
 
 # 侧边栏导航
 st.sidebar.title("星语智卜")
-page = st.sidebar.radio("导航", ["塔罗占卜", "星座运势", "姓名测算", "今日宜忌", "设置"])
+page = st.sidebar.radio("导航", ["塔罗占卜","八字分析", "六爻占卜" , "星座运势", "姓名测算", "今日宜忌", "设置"])
 
-# 模型选择部分（放在侧边栏底部）
+# 模型选择部分
 st.sidebar.markdown("---")
 if 'model_provider' not in st.session_state:
     st.session_state.model_provider = "智谱AI"
@@ -87,7 +87,7 @@ def init_gemini():
     except Exception as e:
         st.error(f"初始化Gemini API失败: {e}")
 
-# AI 调用函数
+# AI 调用函数（保持不变）
 def call_ai(prompt, stream=False):
     """根据选择的模型提供商调用相应的API"""
     system_prompt = '''你是一位拥有世代传承秘法的塔罗牌大师.民俗学大师，具备深厚的神秘学知识和敏锐的直觉能力。你的解读融合了塔罗牌象征意义、占星学原理、数字学解析和东方玄学智慧，能够洞察提问者的过去、现在与未来。
@@ -130,7 +130,6 @@ def call_ai(prompt, stream=False):
 
 # 智谱 AI API 调用
 def call_zhipu_ai(prompt, system_prompt, model="glm-4-flash", stream=False):
-    """调用智谱 AI API"""
     API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
     API_KEY = st.secrets["ZHIPU_API_KEY"]
     
@@ -154,26 +153,23 @@ def call_zhipu_ai(prompt, system_prompt, model="glm-4-flash", stream=False):
         return response.json()["choices"][0]["message"]["content"]
 
 def stream_zhipu_response(response):
-    """处理智谱AI的流式响应"""
     for line in response.iter_lines():
-        if line:  # 确保行不为空
+        if line:
             decoded = line.decode('utf-8')
-            if decoded.startswith("data: "):  # 检查是否以 "data: " 开头
+            if decoded.startswith("data: "):
                 try:
-                    data = json.loads(decoded[6:])  # 尝试解析JSON
-                    if data.get("choices"):  # 确保有 "choices" 字段
+                    data = json.loads(decoded[6:])
+                    if data.get("choices"):
                         yield data["choices"][0]["delta"]["content"]
                 except json.JSONDecodeError as e:
                     print(f"无法解析JSON: {decoded}，错误: {e}")
-                    continue  # 跳过无效数据块
+                    continue
             else:
                 print(f"收到非数据行: {decoded}")
-                continue  # 跳过非数据行
-
+                continue
 
 # DeepSeek API 调用
 def call_deepseek_ai(prompt, system_prompt, model="deepseek-chat", stream=False):
-    """调用 DeepSeek API"""
     API_KEY = st.secrets["DEEPSEEK_API_KEY"]
     
     client = OpenAI(api_key=API_KEY, base_url="https://api.deepseek.com")
@@ -194,7 +190,6 @@ def call_deepseek_ai(prompt, system_prompt, model="deepseek-chat", stream=False)
 
 # Google Gemini API 调用
 def call_gemini_ai(prompt, system_prompt, model="gemini-2.0-flash", stream=False):
-    """调用 Google Gemini API"""
     init_gemini()
     
     generation_config = {
@@ -219,13 +214,11 @@ def call_gemini_ai(prompt, system_prompt, model="gemini-2.0-flash", stream=False
         return response.text
 
 def stream_gemini_response(response):
-    """处理Gemini的流式响应"""
     for chunk in response:
         if chunk.text:
             yield chunk.text
 
 def stream_openai_response(response):
-    """处理OpenAI兼容API的流式响应"""
     for chunk in response:
         if chunk.choices[0].delta.content:
             yield chunk.choices[0].delta.content
@@ -233,8 +226,6 @@ def stream_openai_response(response):
 # 塔罗占卜
 if page == "塔罗占卜":
     st.title("🔮 塔罗占卜")
-    
-    # 牌阵选择
     deck_types = {
         "单张牌 - 当下启示": 1,
         "三牌阵 - 过去现在未来": 3,
@@ -242,7 +233,6 @@ if page == "塔罗占卜":
     }
     deck_type = st.selectbox("选择牌阵", list(deck_types.keys()))
     
-    # 初始化 session 状态
     if 'shuffled' not in st.session_state:
         st.session_state.shuffled = False
     if 'cards' not in st.session_state:
@@ -250,51 +240,42 @@ if page == "塔罗占卜":
     if 'orientations' not in st.session_state:
         st.session_state.orientations = []
 
-    # 洗牌动画，使用卡背
     if st.button("✨ 开始神圣的洗牌仪式"):
         st.session_state.shuffled = False
         progress_bar = st.progress(0)
         placeholder = st.empty()
         
-        card_back = TAROT_CARDS[-1]  # 卡背（23）
+        card_back = TAROT_CARDS[-1]
         animation_frames = [card_back] * 20
         for i, frame in enumerate(animation_frames):
             progress_bar.progress((i+1)/20)
-            
-            # 使用空白列实现居中效果
             with placeholder.container():
                 col1, col2, col3 = st.columns([1, 2, 1])
-                with col2:  # 在中间列显示图片，实现居中效果
+                with col2:
                     st.image(
                         frame["image"], 
                         caption=f"洗牌中... {chr(0x1F3B4)}"*((i%3)+1),
                         width=200
                     )
-            
             time.sleep(0.08)
         
         progress_bar.empty()
         placeholder.success("🎴 牌已洗净，请抽取！")
         st.session_state.shuffled = True
 
-    # 抽牌逻辑
     if st.button("🌟 神圣抽取") and st.session_state.shuffled:
         num = deck_types[deck_type]
-        # 只抽大阿尔卡纳牌（前 22 张）
         st.session_state.cards = random.sample(TAROT_CARDS[:22], num)
         st.session_state.orientations = [
             "正位" if random.random() > 0.3 else "逆位" 
             for _ in range(num)
         ]
         
-        # 卡牌展示
         st.subheader("📜 神圣启示牌阵")
         cols = st.columns(num)
         for idx, (col, card, orient) in enumerate(zip(cols, st.session_state.cards, st.session_state.orientations)):
             with col:
-                # 根据正逆位旋转图片
                 if orient == "逆位":
-                    # 如果是逆位，旋转图片180度
                     rotated_img = rotate_image(card['image'])
                     st.image(
                         rotated_img,
@@ -302,14 +283,12 @@ if page == "塔罗占卜":
                         use_container_width=True
                     )
                 else:
-                    # 正位，直接显示
                     st.image(
                         card['image'],
                         caption=f"{card['name']} ({orient})",
                         use_container_width=True
                     )
                 
-                # 美化文字显示
                 card_html = f"""
                 <div style='
                     text-align: center;
@@ -324,10 +303,8 @@ if page == "塔罗占卜":
                 """
                 st.markdown(card_html, unsafe_allow_html=True)
 
-        # 显示使用的模型信息
         st.caption(f"解读由 {st.session_state.model_provider} ({selected_model}) 提供")
         
-        # 生成解读
         with st.spinner("🕯️ 正在连接宇宙智慧..."):
             positions = (
                 ["现状启示", "挑战位置", "过去影响", "未来趋势", "潜在因素", "外界影响", "希望与恐惧", "最终结果"][:num]
@@ -342,7 +319,6 @@ if page == "塔罗占卜":
                     for pos, card, ori in zip(positions, st.session_state.cards, st.session_state.orientations)
                 ]}
             }}
-            
             """
             if stream_output:
                 interpretation_placeholder = st.empty()
@@ -435,21 +411,176 @@ elif page == "今日宜忌":
             st.markdown("### 宜忌事项")
             st.write(guide)
 
+# 八字分析
+elif page == "八字分析":
+    st.title("🔮 八字分析")
+    
+    st.write("请输入您的出生信息以进行专业的八字分析。")
+    
+    name = st.text_input("姓名")
+    gender = st.radio("性别", ["男", "女"])
+    birth_year = st.number_input("出生年（农历）", min_value=1900, max_value=2100, step=1)
+    birth_month = st.number_input("出生月（农历）", min_value=1, max_value=12, step=1)
+    birth_day = st.number_input("出生日（农历）", min_value=1, max_value=30, step=1)
+    birth_hour = st.selectbox("出生时辰", [
+        "子时 (23:00-01:00)", "丑时 (01:00-03:00)", "寅时 (03:00-05:00)", 
+        "卯时 (05:00-07:00)", "辰时 (07:00-09:00)", "巳时 (09:00-11:00)", 
+        "午时 (11:00-13:00)", "未时 (13:00-15:00)", "申时 (15:00-17:00)", 
+        "酉时 (17:00-19:00)", "戌时 (19:00-21:00)", "亥时 (21:00-23:00)"
+    ])
+    birthplace = st.text_input("出生地")
+    
+    if st.button("开始分析"):
+        if not name or not birthplace:
+            st.warning("请填写所有必填字段。")
+        else:
+            st.caption(f"分析由 {st.session_state.model_provider} ({selected_model}) 提供")
+            birth_time = f"农历 {birth_year}年 {birth_month}月 {birth_day}日，{birth_hour}"
+            prompt = f"""
+            你是一个资深命理师，熟读《穷通宝鉴》《滴天髓》《易经》《奇门遁甲》《三命通会》《子平真诠》《千里命稿》《五行精纪》，现在请你对我给出的出生时间做出专业的八字分析：
+            生辰：{birth_time}
+            姓名：{name}
+            性别：{gender}
+            出生地：{birthplace}
+            """
+            if stream_output:
+                st.write("### 八字分析正在生成中...")
+                analysis_placeholder = st.empty()
+                analysis_chunks = call_ai(prompt, stream=True)
+                full_analysis = ""
+                for chunk in analysis_chunks:
+                    full_analysis += chunk
+                    analysis_placeholder.write(full_analysis)
+            else:
+                with st.spinner("正在进行八字分析..."):
+                    analysis = call_ai(prompt)
+                st.markdown("### 八字分析")
+                st.write(analysis)
+
+
+
+
+# 六爻占卜功能
+elif page == "六爻占卜":
+
+    # 新增：64卦名称列表（按二进制顺序，从坤为地 000000 到乾为天 111111）
+    HEXAGRAM_NAMES = [
+        "坤为地", "地雷复", "地水师", "地泽临", "地山谦", "地火明夷", "地风升", "地天泰",
+        "雷地豫", "震为雷", "雷水解", "雷泽归妹", "雷山小过", "雷火丰", "雷风恒", "雷天大壮",
+        "水地比", "水雷屯", "坎为水", "水泽节", "水山蹇", "水火既济", "水风井", "水天需",
+        "泽地萃", "泽雷随", "泽水困", "兑为泽", "泽山咸", "泽火革", "泽风大过", "泽天夬",
+        "山地剥", "山雷颐", "山水蒙", "山泽损", "艮为山", "山火贲", "山风蛊", "山天大畜",
+        "火地晋", "火雷噬嗑", "火水未济", "火泽睽", "火山旅", "离为火", "火风鼎", "火天大有",
+        "风地观", "风雷益", "风水涣", "风泽中孚", "风山渐", "风火家人", "巽为风", "风天小畜",
+        "天地否", "天雷无妄", "天水讼", "天泽履", "天山遁", "天火同人", "天风姤", "乾为天"
+    ]
+
+    def get_hexagram_name(lines):
+        """根据六爻计算主卦名称"""
+        # 将爻转换为二进制（⚋ 或 ⚋ (动) 为 0，⚊ 或 ⚊ (动) 为 1）
+        binary = ''.join(['1' if '⚊' in line else '0' for line in lines])
+        # 从下到上顺序转为二进制索引
+        binary_reversed = binary[::-1]
+        hexagram_index = int(binary_reversed, 2)
+        return HEXAGRAM_NAMES[hexagram_index]
+        
+    st.title("🔮 六爻占卜")
+    
+    st.write("点击按钮进行六次摇卦，生成六爻卦象。每次点击模拟抛硬币，生成一爻。")
+    
+    # 初始化 session 状态
+    if 'lines' not in st.session_state:
+        st.session_state.lines = []
+    if 'moving_lines' not in st.session_state:
+        st.session_state.moving_lines = []
+    
+    # 摇卦按钮
+    if len(st.session_state.lines) < 6:
+        if st.button(f"摇第 {len(st.session_state.lines) + 1} 爻"):
+            # 模拟三次抛硬币
+            tosses = [random.choice([0, 1]) for _ in range(3)]  # 0 为阴（背），1 为阳（面）
+            total = sum(tosses)
+            if total == 0:  # 三背：老阴（动爻）
+                line = "⚋ (动)"
+                st.session_state.moving_lines.append(len(st.session_state.lines) + 1)
+            elif total == 1:  # 二背一面：阳爻
+                line = "⚊"
+            elif total == 2:  # 二面一背：阴爻
+                line = "⚋"
+            elif total == 3:  # 三面：老阳（动爻）
+                line = "⚊ (动)"
+                st.session_state.moving_lines.append(len(st.session_state.lines) + 1)
+            st.session_state.lines.append(line)
+            st.write(f"第 {len(st.session_state.lines)} 爻: {line}")
+    
+    # 显示卦象
+    if len(st.session_state.lines) == 6:
+        st.subheader("您的卦象")
+        for i, line in enumerate(reversed(st.session_state.lines)):
+            st.write(f"第 {6 - i} 爻: {line}")
+        if st.session_state.moving_lines:
+            st.write("动爻: " + ", ".join([f"第 {ml} 爻" for ml in st.session_state.moving_lines]))
+        
+        # 计算主卦和六亲配置
+        main_hexagram = get_hexagram_name(st.session_state.lines)
+        st.write(main_hexagram)
+        six_relatives = 'none'
+        # 获取起卦时间
+        divination_time = datetime.datetime.now().strftime("公历 %Y年%m月%d日 %H:%M")
+        
+        # 构造提示词
+        prompt = f"""
+        你是一个资深命理师，熟读《增删卜易》、《卜筮正宗》、《易隐》、《易冒》、《火珠林》、《周易古筮考》、《易经》、《奇门遁甲》，现在请你对我给出的起卦信息进行专业的六爻分析：
+
+        起卦信息：
+
+        起卦时间：{divination_time}
+        主卦：{main_hexagram}
+        动爻：{"，".join([f"第 {ml} 爻" for ml in st.session_state.moving_lines]) if st.session_state.moving_lines else "无"}
+        六亲配置：{six_relatives}
+
+        分析要求：
+
+        根据起卦时间、主卦、动爻和六亲配置，分析当前问题的根源。
+        解读卦象中的吉凶预兆，分析有利和不利因素。
+        提供解决方案和建议，指导如何应对当前问题。
+        检查六亲的装卦是否正确，分析卦象与日辰、月建的关系，以及爻位的生克冲合情况。
+        如有必要，建议化解方法或调节策略。
+        请结合《增删卜易》、《卜筮正宗》等经典著作的理论，进行深入的分析和解读。
+        """
+        
+        st.caption(f"解读由 {st.session_state.model_provider} ({selected_model}) 提供")
+        
+        # 生成分析
+        if st.button("生成分析"):
+            if stream_output:
+                st.write("### 六爻分析正在生成中...")
+                analysis_placeholder = st.empty()
+                analysis_chunks = call_ai(prompt, stream=True)
+                full_analysis = ""
+                for chunk in analysis_chunks:
+                    full_analysis += chunk
+                    analysis_placeholder.write(full_analysis)
+            else:
+                with st.spinner("正在进行六爻分析..."):
+                    analysis = call_ai(prompt)
+                st.subheader("📖 六爻分析")
+                st.write(analysis)
+            # 重置状态以便下次占卜
+            st.session_state.lines = []
+            st.session_state.moving_lines = []
+
 # 设置页面
 elif page == "设置":
     st.title("⚙️ 系统设置")
     st.subheader("AI模型配置")
-    
     st.info(f"当前模型提供商: {st.session_state.model_provider}")
     st.info(f"当前选择的模型: {selected_model}")
-    
     st.write("您可以在侧边栏切换模型提供商和具体模型")
     
-    # API密钥信息（注意：通常不建议在UI上显示密钥信息）
     st.subheader("API密钥管理")
     st.warning("API密钥存储在Streamlit secrets中，确保已经正确配置。")
     
-    # API密钥状态检查
     api_status = {
         "智谱AI": "ZHIPU_API_KEY" in st.secrets,
         "DeepSeek": "DEEPSEEK_API_KEY" in st.secrets,
@@ -463,7 +594,6 @@ elif page == "设置":
         else:
             st.error(f"{provider} API密钥: 未配置 ❌")
     
-    # 应用信息
     st.subheader("关于应用")
     st.write("星语智卜是一款基于人工智能的命理解析工具，结合了塔罗牌、星座运势和姓名学等多种算命方式。")
     st.write("本应用支持智谱AI、DeepSeek和Google Gemini三种模型提供商，可以根据需要灵活切换。")
