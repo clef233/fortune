@@ -596,7 +596,7 @@ elif page == "设置":
     # 插入收款码
     st.subheader("支持开发者")
     st.write("如果您喜欢这个应用，欢迎通过以下方式支持开发者：")
-    st.image('images/alipay.jpg', caption="扫码支持", width=200)
+    st.image('image/alipay.jpg', caption="扫码支持", width=200)
     st.write("感谢您的支持！您的捐赠将用于应用的维护和改进。")
 
     st.subheader("关于应用")
