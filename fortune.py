@@ -240,7 +240,7 @@ if page == "塔罗占卜":
     if 'orientations' not in st.session_state:
         st.session_state.orientations = []
 
-    if st.button("✨ 开始神圣的洗牌仪式"):
+    if st.button("✨ 开始洗牌仪式"):
         st.session_state.shuffled = False
         progress_bar = st.progress(0)
         placeholder = st.empty()
@@ -263,7 +263,7 @@ if page == "塔罗占卜":
         placeholder.success("🎴 牌已洗净，请抽取！")
         st.session_state.shuffled = True
 
-    if st.button("🌟 神圣抽取") and st.session_state.shuffled:
+    if st.button("🌟 抽取") and st.session_state.shuffled:
         num = deck_types[deck_type]
         st.session_state.cards = random.sample(TAROT_CARDS[:22], num)
         st.session_state.orientations = [
@@ -537,16 +537,15 @@ elif page == "六爻占卜":
         起卦时间：{divination_time}
         主卦：{main_hexagram}
         动爻：{"，".join([f"第 {ml} 爻" for ml in st.session_state.moving_lines]) if st.session_state.moving_lines else "无"}
-        六亲配置：{six_relatives}
+        
 
         分析要求：
 
-        根据起卦时间、主卦、动爻和六亲配置，分析当前问题的根源。
+        根据起卦时间、主卦、动爻、本卦、变卦等，分析当前问题的根源。
         解读卦象中的吉凶预兆，分析有利和不利因素。
         提供解决方案和建议，指导如何应对当前问题。
-        检查六亲的装卦是否正确，分析卦象与日辰、月建的关系，以及爻位的生克冲合情况。
         如有必要，建议化解方法或调节策略。
-        请结合《增删卜易》、《卜筮正宗》等经典著作的理论，进行深入的分析和解读。
+        进行深入的分析和解读。
         """
         
         st.caption(f"解读由 {st.session_state.model_provider} ({selected_model}) 提供")
@@ -597,7 +596,7 @@ elif page == "设置":
     st.subheader("关于应用")
     st.write("星语智卜是一款基于人工智能的命理解析工具，结合了塔罗牌、星座运势和姓名学等多种算命方式。")
     st.write("本应用支持智谱AI、DeepSeek和Google Gemini三种模型提供商，可以根据需要灵活切换。")
-    st.write("版本: 1.1.0")
+    st.write("版本: 1.2.0")
 
 # 页脚
 st.write("---")
